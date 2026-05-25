@@ -1040,12 +1040,8 @@
 
     function defaultState() {
       return {
-        salespersons: ['Smit', 'Kalpesh Bhai'],
-        parties: [
-          { name: 'Devka Resort', sp: ['Smit', 'Kalpesh Bhai'] },
-          { name: 'Hotel Silvassa', sp: ['Smit'] },
-          { name: 'Green Valley', sp: ['Kalpesh Bhai'] }
-        ],
+        salespersons: [],
+        parties: [],
         entries: []
       };
     }
@@ -1087,28 +1083,16 @@
 
       // 1. Sync Salespersons
       onSnapshot(collection(db, 'salespersons'), snap => {
-        if (snap.empty) {
-          // Initial seed if Firestore is brand new
-          const defaults = defaultState().salespersons;
-          defaults.forEach(s => addDocFb('salespersons', { name: s }));
-        } else {
-          state.salespersons = snap.docs.map(d => d.data().name);
-          saveState();
-          refreshCurrentTab();
-        }
+        state.salespersons = snap.docs.map(d => d.data().name);
+        saveState();
+        refreshCurrentTab();
       }, err => console.error("Salespersons sync error:", err));
 
       // 2. Sync Parties
       onSnapshot(collection(db, 'parties'), snap => {
-        if (snap.empty) {
-          // Initial seed if Firestore is brand new
-          const defaults = defaultState().parties;
-          defaults.forEach(p => addDocFb('parties', { name: p.name, sp: p.sp }));
-        } else {
-          state.parties = snap.docs.map(d => ({ name: d.data().name, sp: d.data().sp }));
-          saveState();
-          refreshCurrentTab();
-        }
+        state.parties = snap.docs.map(d => ({ name: d.data().name, sp: d.data().sp }));
+        saveState();
+        refreshCurrentTab();
       }, err => console.error("Parties sync error:", err));
 
       // 3. Sync Entries
