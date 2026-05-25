@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prata Aqua — Sales Manager</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, setDoc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBb40KBKwSJ5zlMVFuMRdx-7iCEvuHbz24",
+      authDomain: "sales-manager-d608f.firebaseapp.com",
+      projectId: "sales-manager-d608f",
+      storageBucket: "sales-manager-d608f.firebasestorage.app",
+      messagingSenderId: "983902478434",
+      appId: "1:983902478434:web:3318fd0d3fac27f8fd713b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window._db = db;
+    window._fs = { collection, getDocs, addDoc, deleteDoc, doc, setDoc, updateDoc, onSnapshot, query, orderBy };
+    window.dispatchEvent(new Event('firebase-ready'));
+  </script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface2: #1a2540;
+      --border: #1e3a5f;
+      --accent: #00b4d8;
+      --accent2: #90e0ef;
+      --gold: #f4a261;
+      --green: #26d07c;
+      --red: #ff6b6b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --radius: 12px;
+    }
+
+    body.light-mode {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface2: #e2e8f0;
+      --border: #cbd5e1;
+      --accent: #0284c7;
+      --accent2: #0369a1;
+      --gold: #d97706;
+      --green: #15803d;
+      --red: #b91c1c;
+      --text: #0f172a;
+      --muted: #475569;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    /* bg texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0, 180, 216, .13), transparent), radial-gradient(ellipse 40% 40% at 90% 90%, rgba(144, 224, 239, .06), transparent);
+      pointer-events: none;
+      z-index: 0
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px 60px
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 20px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent), #0077b6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px
+    }
+
+    .brand-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 2px;
+      color: var(--accent2);
+      line-height: 1
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 2px
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      transition: .2s
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border)
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--accent)
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      font-weight: 600
+    }
+
+    .btn-primary:hover {
+      background: var(--accent2)
+    }
+
+    .btn-danger {
+      background: var(--red);
+      color: #fff
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px
+    }
+
+    .btn-gold {
+      background: var(--gold);
+      color: #000;
+      font-weight: 600
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin: 24px 0 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .tab {
+      padding: 10px 20px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: .2s;
+      margin-bottom: -1px
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent)
+    }
+
+    .tab:hover:not(.active) {
+      color: var(--text)
+    }
+
+    /* ── PANELS ── */
+    .panel {
+      display: none;
+      padding-top: 28px
+    }
+
+    .panel.active {
+      display: block
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px
+    }
+
+    .card-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .card-title span {
+      color: var(--accent)
+    }
+
+    /* ── STAT GRID ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent)
+    }
+
+    .stat-card.gold::after {
+      background: var(--gold)
+    }
+
+    .stat-card.green::after {
+      background: var(--green)
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 8px
+    }
+
+    .stat-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      letter-spacing: 1px;
+      color: var(--accent2);
+      line-height: 1
+    }
+
+    .stat-card.gold .stat-value {
+      color: var(--gold)
+    }
+
+    .stat-card.green .stat-value {
+      color: var(--green)
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px
+    }
+
+    /* ── FORM ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 14px
+    }
+
+    @media(max-width:700px) {
+      .form-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .5px
+    }
+
+    .input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: .2s;
+      width: 100%
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 180, 216, .12)
+    }
+
+    .input::placeholder {
+      color: var(--muted)
+    }
+
+    select.input {
+      cursor: pointer
+    }
+
+    /* autocomplete */
+    .autocomplete-wrap {
+      position: relative
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--surface2);
+      border: 1px solid var(--accent);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      z-index: 100;
+      max-height: 160px;
+      overflow-y: auto;
+      display: none
+    }
+
+    .autocomplete-list.show {
+      display: block
+    }
+
+    .autocomplete-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: .15s
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+      background: rgba(0, 180, 216, .15);
+      color: var(--accent2)
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 10px
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap
+    }
+
+    td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(30, 58, 95, .5);
+      vertical-align: middle
+    }
+
+    tr:last-child td {
+      border-bottom: none
+    }
+
+    tr:hover td {
+      background: rgba(0, 180, 216, .04)
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .5px
+    }
+
+    .badge-blue {
+      background: rgba(0, 180, 216, .15);
+      color: var(--accent2)
+    }
+
+    .badge-gold {
+      background: rgba(244, 162, 97, .15);
+      color: var(--gold)
+    }
+
+    .badge-green {
+      background: rgba(38, 208, 124, .15);
+      color: var(--green)
+    }
+
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 15px;
+      transition: .2s
+    }
+
+    .del-btn:hover {
+      color: var(--red);
+      background: rgba(255, 107, 107, .1)
+    }
+
+    /* ── SALESPERSON LEADERBOARD ── */
+    .sp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 14px
+    }
+
+    .sp-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: .2s
+    }
+
+    .sp-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px)
+    }
+
+    .sp-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 1px;
+      color: var(--accent2);
+      margin-bottom: 4px
+    }
+
+    .sp-cases {
+      font-size: 13px;
+      color: var(--muted)
+    }
+
+    .sp-cases strong {
+      color: var(--gold);
+      font-size: 20px;
+      font-family: 'DM Mono', monospace
+    }
+
+    .sp-bar-wrap {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 12px
+    }
+
+    .sp-bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width .6s ease
+    }
+
+    /* ── ADMIN PANEL ── */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px
+    }
+
+    @media(max-width:700px) {
+      .admin-grid {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px
+    }
+
+    .chip-del {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 2px;
+      transition: .15s
+    }
+
+    .chip-del:hover {
+      color: var(--red)
+    }
+
+    .admin-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(244, 162, 97, .07);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 6px 6px 0
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px)
+    }
+
+    .modal-overlay.show {
+      display: flex
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      width: 90%;
+      max-width: 420px
+    }
+
+    .modal h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 1px;
+      color: var(--accent2);
+      margin-bottom: 6px
+    }
+
+    .modal p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--green);
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: .3s;
+      pointer-events: none
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1
+    }
+
+    /* date filter row */
+    .filter-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px
+    }
+
+    .filter-row label {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .filter-row .input {
+      width: auto
+    }
+
+    .divider {
+      width: 1px;
+      height: 28px;
+      background: var(--border)
+    }
+
+    /* empty state */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 14px
+    }
+
+    .empty span {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 10px
+    }
+
+    /* party note */
+    .party-sp {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px
+    }
+
+    /* duo highlight */
+    .duo-tag {
+      font-size: 10px;
+      background: rgba(244, 162, 97, .18);
+      color: var(--gold);
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-left: 6px;
+      font-weight: 600;
+      letter-spacing: .5px
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">💧</div>
+        <div>
+          <div class="brand-name">Prata Aqua</div>
+          <div class="brand-sub">Sales Manager</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost btn-sm" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
+        <button class="btn btn-ghost btn-sm" onclick="openAdminModal()">🔐 Admin</button>
+        <button class="btn btn-primary btn-sm" onclick="showTab('entry')">+ New Entry</button>
+      </div>
+    </header>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('dashboard')" id="tab-dashboard">📊 Dashboard</button>
+      <button class="tab" onclick="showTab('entry')" id="tab-entry">➕ Entry</button>
+      <button class="tab" onclick="showTab('records')" id="tab-records">📋 Records</button>
+      <button class="tab" onclick="showTab('salesperson')" id="tab-salesperson">👤 Salesperson</button>
+      <button class="tab" onclick="showTab('admin')" id="tab-admin" style="display:none">⚙️ Admin</button>
+    </div>
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Cases Today</div>
+          <div class="stat-value" id="dash-today">0</div>
+          <div class="stat-sub">cases sold</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-label">Total Cases (All Time)</div>
+          <div class="stat-value" id="dash-total">0</div>
+          <div class="stat-sub">cumulative</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Active Parties</div>
+          <div class="stat-value" id="dash-parties">0</div>
+          <div class="stat-sub">unique parties</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Salespersons</div>
+          <div class="stat-value" id="dash-sp">0</div>
+          <div class="stat-sub" style="color:var(--accent2)">active</div>
+        </div>
+      </div>
+
+      <!-- top parties -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span>🏆</span> Top Parties Today</div>
+        <div id="top-parties-list">
+          <div class="empty"><span>📦</span>No entries yet today</div>
+        </div>
+      </div>
+
+      <!-- recent entries -->
+      <div class="card">
+        <div class="card-title"><span>🕐</span> Recent Entries</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:50px">Sr.</th>
+                <th>Time</th>
+                <th>Party</th>
+                <th>Cases</th>
+                <th>Salesperson(s)</th>
+              </tr>
+            </thead>
+            <tbody id="recent-tbody">
+              <tr>
+                <td colspan="4" class="empty">No entries yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ENTRY ══ -->
+    <div class="panel" id="panel-entry">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span>➕</span> New Sale Entry</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Party Name</label>
+            <div class="autocomplete-wrap">
+              <input class="input" id="entry-party" placeholder="Type party name…" autocomplete="off"
+                oninput="partyAC(this)" onkeydown="acKey(event,'party-ac')">
+              <div class="autocomplete-list" id="party-ac"></div>
+            </div>
+            <div class="party-sp" id="party-sp-hint"></div>
+          </div>
+          <div class="form-group">
+            <label>Cases</label>
+            <input class="input" id="entry-cases" type="number" min="1" placeholder="e.g. 10"
+              style="font-family:'DM Mono',monospace">
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input class="input" id="entry-date" type="date">
+          </div>
+          <div>
+            <button class="btn btn-primary" onclick="submitEntry()" style="height:42px;padding:0 24px">Add
+              Entry</button>
+          </div>
+        </div>
+        <div class="admin-note">💡 Salesperson(s) are automatically assigned from the party configuration. Duo parties
+          split cases equally.</div>
+      </div>
+
+      <!-- today's entries -->
+      <div class="card">
+        <div class="card-title"><span>📋</span> Today's Entries</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Party</th>
+                <th>Cases</th>
+                <th>Salesperson(s)</th>
+                <th>Type</th>
+                <th>Time</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="today-tbody">
+              <tr>
+                <td colspan="6" class="empty">No entries today</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RECORDS ══ -->
+    <div class="panel" id="panel-records">
+      <div class="filter-row">
+        <div class="form-group">
+          <label>From</label>
+          <input class="input" id="filter-from" type="date" onchange="renderRecords()">
+        </div>
+        <div class="form-group">
+          <label>To</label>
+          <input class="input" id="filter-to" type="date" onchange="renderRecords()">
+        </div>
+        <div class="divider"></div>
+        <div class="form-group">
+          <label>Salesperson</label>
+          <select class="input" id="filter-sp" onchange="renderRecords()">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Party</label>
+          <div class="autocomplete-wrap">
+            <input class="input" id="filter-party" placeholder="All parties" autocomplete="off"
+              oninput="filterPartyAC(this)" onkeydown="acKey(event,'filter-party-ac')" style="width:160px">
+            <div class="autocomplete-list" id="filter-party-ac"></div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>📋</span> All Records <span id="records-count"
+            style="color:var(--muted);font-size:11px"></span></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:50px">Sr.</th>
+                <th>Date</th>
+                <th>Party</th>
+                <th>Cases</th>
+                <th>Salesperson(s)</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody id="records-tbody"></tbody>
+            <tfoot id="records-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SALESPERSON ══ -->
+    <div class="panel" id="panel-salesperson">
+      <div class="filter-row">
+        <div class="form-group">
+          <label>From</label>
+          <input class="input" id="sp-filter-from" type="date" onchange="renderSPPanel()">
+        </div>
+        <div class="form-group">
+          <label>To</label>
+          <input class="input" id="sp-filter-to" type="date" onchange="renderSPPanel()">
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearSPFilters()">✕ Clear</button>
+      </div>
+      <div class="sp-grid" id="sp-grid"></div>
+
+      <!-- per-party breakdown -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-title"><span>📊</span> Cases by Salesperson × Party</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:50px">Sr.</th>
+                <th>Salesperson</th>
+                <th>Party</th>
+                <th>Total Cases</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody id="sp-party-tbody"></tbody>
+            <tfoot id="sp-party-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ADMIN ══ -->
+    <div class="panel" id="panel-admin">
+      <div class="admin-grid">
+        <!-- Salespersons -->
+        <div class="card">
+          <div class="card-title"><span>👤</span> Manage Salespersons</div>
+          <div class="form-row" style="grid-template-columns:1fr auto;margin-bottom:0">
+            <input class="input" id="new-sp-name" placeholder="Salesperson name…">
+            <button class="btn btn-primary" onclick="addSP()">Add</button>
+          </div>
+          <div class="chip-list" id="sp-list"></div>
+        </div>
+
+        <!-- Parties -->
+        <div class="card">
+          <div class="card-title"><span>🏪</span> Manage Parties</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Party Name</label>
+            <input class="input" id="new-party-name" placeholder="Party name…">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Assign Salesperson(s)</label>
+            <div id="sp-checkbox-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
+          </div>
+          <button class="btn btn-primary" onclick="addParty()" style="width:100%">Add Party</button>
+          <div class="chip-list" id="party-list" style="margin-top:14px"></div>
+        </div>
+      </div>
+      <div class="admin-note" style="margin-top:16px">⚠️ Changes here are permanent and affect all future entries.
+        Existing records remain unchanged.</div>
+    </div>
+
+  </div>
+
+  <!-- ADMIN AUTH MODAL -->
+  <div class="modal-overlay" id="admin-modal">
+    <div class="modal">
+      <h3>Admin Access</h3>
+      <p>Enter the admin password to manage salespersons and parties.</p>
+      <div class="form-group">
+        <label>Password</label>
+        <input class="input" id="admin-pwd" type="password" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')checkAdmin()">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('admin-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="checkAdmin()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div id="toast"></div>
+
+  <script>
+    // ── STATE & DATABASE ───────────────────────────────────────
+    const ADMIN_PASS = 'prata2024'; // change as needed
+    let adminUnlocked = false;
+
+    let state = loadState();
+
+    function defaultState() {
+      return {
+        salespersons: ['Smit', 'Kalpesh Bhai'],
+        parties: [
+          { name: 'Devka Resort', sp: ['Smit', 'Kalpesh Bhai'] },
+          { name: 'Hotel Silvassa', sp: ['Smit'] },
+          { name: 'Green Valley', sp: ['Kalpesh Bhai'] }
+        ],
+        entries: []
+      };
+    }
+
+    function loadState() {
+      try {
+        const s = localStorage.getItem('prataaqua');
+        return s ? JSON.parse(s) : defaultState();
+      } catch (e) { return defaultState() }
+    }
+    function saveState() { localStorage.setItem('prataaqua', JSON.stringify(state)) }
+
+    // ===== FIREBASE INTEGRATION =====
+    async function ensureDb() {
+      if (window._db) return window._db;
+      return new Promise(res => window.addEventListener('firebase-ready', () => res(window._db), { once: true }));
+    }
+
+    async function addDocFb(col, obj) {
+      const db = await ensureDb();
+      const { collection, addDoc } = window._fs;
+      const ref = await addDoc(collection(db, col), obj);
+      return ref.id;
+    }
+
+    async function deleteDocFb(col, field, value) {
+      const db = await ensureDb();
+      const { collection, getDocs, doc, deleteDoc } = window._fs;
+      const snap = await getDocs(collection(db, col));
+      const match = snap.docs.find(d => d.data()[field] === value);
+      if (match) {
+        await deleteDoc(doc(db, col, match.id));
+      }
+    }
+
+    async function setupRealtimeSync() {
+      const db = await ensureDb();
+      const { collection, onSnapshot } = window._fs;
+
+      // 1. Sync Salespersons
+      onSnapshot(collection(db, 'salespersons'), snap => {
+        if (snap.empty) {
+          // Initial seed if Firestore is brand new
+          const defaults = defaultState().salespersons;
+          defaults.forEach(s => addDocFb('salespersons', { name: s }));
+        } else {
+          state.salespersons = snap.docs.map(d => d.data().name);
+          saveState();
+          refreshCurrentTab();
+        }
+      }, err => console.error("Salespersons sync error:", err));
+
+      // 2. Sync Parties
+      onSnapshot(collection(db, 'parties'), snap => {
+        if (snap.empty) {
+          // Initial seed if Firestore is brand new
+          const defaults = defaultState().parties;
+          defaults.forEach(p => addDocFb('parties', { name: p.name, sp: p.sp }));
+        } else {
+          state.parties = snap.docs.map(d => ({ name: d.data().name, sp: d.data().sp }));
+          saveState();
+          refreshCurrentTab();
+        }
+      }, err => console.error("Parties sync error:", err));
+
+      // 3. Sync Entries
+      onSnapshot(collection(db, 'entries'), snap => {
+        state.entries = snap.docs.map(d => ({
+          _id: d.id,
+          id: d.data().id,
+          party: d.data().party,
+          cases: d.data().cases,
+          sp: d.data().sp,
+          date: d.data().date,
+          time: d.data().time
+        })).sort((a, b) => b.id - a.id);
+        saveState();
+        refreshCurrentTab();
+      }, err => console.error("Entries sync error:", err));
+    }
+
+    // ── TABS ──────────────────────────────────────────────────
+    let activeTab = 'dashboard';
+
+    function showTab(name) {
+      activeTab = name;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      document.getElementById('panel-' + name).classList.add('active');
+      refreshCurrentTab();
+    }
+
+    function refreshCurrentTab() {
+      if (activeTab === 'dashboard') renderDashboard();
+      if (activeTab === 'entry') { renderTodayEntries(); setTodayDate(); }
+      if (activeTab === 'records') { renderRecords(); populateFilterSP(); }
+      if (activeTab === 'salesperson') renderSPPanel();
+      if (activeTab === 'admin') renderAdmin();
+    }
+
+    function setTodayDate() {
+      const d = document.getElementById('entry-date');
+      if (!d.value) d.value = todayStr();
+    }
+
+    function todayStr() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    // ── AUTOCOMPLETE ───────────────────────────────────────────
+    let acSelected = { party: null };
+
+    function partyAC(input) {
+      const val = input.value.trim().toLowerCase();
+      const list = document.getElementById('party-ac');
+      document.getElementById('party-sp-hint').textContent = '';
+      if (!val) { list.classList.remove('show'); return; }
+      const matches = state.parties.filter(p => p.name.toLowerCase().includes(val));
+      if (!matches.length) { list.classList.remove('show'); return; }
+      list.innerHTML = matches.map(p => `<div class="autocomplete-item" onclick="selectParty('${p.name.replace(/'/g, "\\'")}')">${p.name}<span class="duo-tag" style="display:${p.sp.length > 1 ? 'inline' : 'none'}"}>DUO</span><br><small style="color:var(--muted)">${p.sp.join(' & ')}</small></div>`).join('');
+      list.classList.add('show');
+    }
+
+    function selectParty(name) {
+      document.getElementById('entry-party').value = name;
+      document.getElementById('party-ac').classList.remove('show');
+      const p = state.parties.find(x => x.name === name);
+      if (p) document.getElementById('party-sp-hint').textContent = '👤 ' + p.sp.join(' & ');
+    }
+
+    function filterPartyAC(input) {
+      const val = input.value.trim().toLowerCase();
+      const list = document.getElementById('filter-party-ac');
+      if (!val) { list.classList.remove('show'); return; }
+      const matches = state.parties.filter(p => p.name.toLowerCase().includes(val));
+      if (!matches.length) { list.classList.remove('show'); return; }
+      list.innerHTML = matches.map(p => `<div class="autocomplete-item" onclick="selectFilterParty('${p.name.replace(/'/g, "\\'")}')">${p.name}</div>`).join('');
+      list.classList.add('show');
+    }
+    function selectFilterParty(name) {
+      document.getElementById('filter-party').value = name;
+      document.getElementById('filter-party-ac').classList.remove('show');
+      renderRecords();
+    }
+
+    function acKey(e, listId) {
+      const list = document.getElementById(listId);
+      const items = [...list.querySelectorAll('.autocomplete-item')];
+      const cur = items.findIndex(i => i.classList.contains('active'));
+      if (e.key === 'ArrowDown') { e.preventDefault(); items[cur]?.classList.remove('active'); items[Math.min(cur + 1, items.length - 1)]?.classList.add('active'); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); items[cur]?.classList.remove('active'); items[Math.max(cur - 1, 0)]?.classList.add('active'); }
+      if (e.key === 'Enter') { const a = list.querySelector('.active'); if (a) a.click(); }
+      if (e.key === 'Escape') list.classList.remove('show');
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.autocomplete-wrap')) document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('show'));
+    });
+
+    // ── ENTRY ─────────────────────────────────────────────────
+    async function submitEntry() {
+      const partyName = document.getElementById('entry-party').value.trim();
+      const cases = parseInt(document.getElementById('entry-cases').value);
+      const date = document.getElementById('entry-date').value || todayStr();
+
+      if (!partyName) { toast('Enter a party name', 'error'); return; }
+      if (!cases || cases < 1) { toast('Enter valid cases', 'error'); return; }
+
+      const party = state.parties.find(p => p.name.toLowerCase() === partyName.toLowerCase());
+      if (!party) { toast('Party not found. Please use a configured party.', 'error'); return; }
+
+      const entry = {
+        id: Date.now(),
+        party: party.name,
+        cases,
+        sp: party.sp,
+        date,
+        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      await addDocFb('entries', entry);
+      toast(`✅ ${cases} cases added for ${party.name}`);
+
+      document.getElementById('entry-party').value = '';
+      document.getElementById('entry-cases').value = '';
+      document.getElementById('party-sp-hint').textContent = '';
+    }
+
+    function renderTodayEntries() {
+      const today = todayStr();
+      const entries = state.entries.filter(e => e.date === today);
+      const tbody = document.getElementById('today-tbody');
+      if (!entries.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No entries today</td></tr>'; return; }
+      tbody.innerHTML = entries.map(e => `
+    <tr>
+      <td>${e.party}</td>
+      <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${e.cases}</span></td>
+      <td>${e.sp.join(' & ')}</td>
+      <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.length > 1 ? 'DUO' : 'SOLO'}</span></td>
+      <td style="color:var(--muted)">${e.time || ''}</td>
+      <td><button class="del-btn" onclick="deleteEntry(${e.id})" title="Delete">🗑</button></td>
+    </tr>
+  `).join('');
+    }
+
+    // ── DELETE ─────────────────────────────────────────────────
+    async function deleteEntry(id) {
+      const pin = prompt("Enter PIN to delete this entry:");
+      if (pin === null) return;
+      if (pin !== '1163') {
+        toast('Invalid PIN', 'error');
+        return;
+      }
+      const entry = state.entries.find(e => e.id === id);
+      if (entry && entry._id) {
+        const db = await ensureDb();
+        const { doc, deleteDoc } = window._fs;
+        await deleteDoc(doc(db, 'entries', entry._id));
+      } else {
+        await deleteDocFb('entries', 'id', id);
+      }
+      toast('Entry deleted');
+    }
+
+    // ── DASHBOARD ──────────────────────────────────────────────
+    function renderDashboard() {
+      const today = todayStr();
+      const todayEntries = state.entries.filter(e => e.date === today);
+      const allEntries = state.entries;
+
+      document.getElementById('dash-today').textContent = todayEntries.reduce((s, e) => s + e.cases, 0);
+      document.getElementById('dash-total').textContent = allEntries.reduce((s, e) => s + e.cases, 0);
+      document.getElementById('dash-parties').textContent = new Set(allEntries.map(e => e.party)).size;
+      document.getElementById('dash-sp').textContent = state.salespersons.length;
+
+      // top parties today
+      const partyMap = {};
+      todayEntries.forEach(e => { partyMap[e.party] = (partyMap[e.party] || 0) + e.cases });
+      const sorted = Object.entries(partyMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const maxC = sorted[0]?.[1] || 1;
+      const tpEl = document.getElementById('top-parties-list');
+      if (!sorted.length) { tpEl.innerHTML = '<div class="empty"><span>📦</span>No entries yet today</div>'; return; }
+      tpEl.innerHTML = sorted.map(([p, c], idx) => `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px">${idx + 1}. ${p}</span>
+        <span style="font-family:'DM Mono',monospace;color:var(--gold)">${c} cases</span>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:3px">
+        <div style="height:6px;width:${Math.round(c / maxC * 100)}%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:.6s"></div>
+      </div>
+    </div>
+  `).join('');
+
+      // recent table
+      const recent = allEntries.slice(0, 8);
+      const rt = document.getElementById('recent-tbody');
+      if (!recent.length) { rt.innerHTML = '<tr><td colspan="5" class="empty">No entries yet</td></tr>'; return; }
+      rt.innerHTML = recent.map((e, idx) => `
+    <tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace">${idx + 1}</td>
+      <td style="color:var(--muted)">${e.date} ${e.time || ''}</td>
+      <td>${e.party}</td>
+      <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${e.cases}</span></td>
+      <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.join(' & ')}</span></td>
+    </tr>
+  `).join('');
+    }
+
+    // ── RECORDS ──────────────────────────────────────────────
+    function renderRecords() {
+      let entries = [...state.entries];
+      const from = document.getElementById('filter-from').value;
+      const to = document.getElementById('filter-to').value;
+      const sp = document.getElementById('filter-sp').value;
+      const party = document.getElementById('filter-party').value.trim().toLowerCase();
+
+      if (from) entries = entries.filter(e => e.date >= from);
+      if (to) entries = entries.filter(e => e.date <= to);
+      if (sp) entries = entries.filter(e => e.sp.includes(sp));
+      if (party) entries = entries.filter(e => e.party.toLowerCase().includes(party));
+
+      entries.sort((a, b) => b.date.localeCompare(a.date) || (b.id - a.id));
+
+      const totalCases = entries.reduce((s, e) => s + e.cases, 0);
+      document.getElementById('records-count').textContent = `(${entries.length} records, ${totalCases} cases)`;
+
+      const tbody = document.getElementById('records-tbody');
+      if (!entries.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No records found</td></tr>';
+        document.getElementById('records-tfoot').innerHTML = '';
+        return;
+      }
+      tbody.innerHTML = entries.map((e, idx) => `
+    <tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace">${idx + 1}</td>
+      <td style="color:var(--muted)">${e.date}</td>
+      <td>${e.party}</td>
+      <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${e.cases}</span></td>
+      <td>${e.sp.join(' & ')}</td>
+      <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.length > 1 ? 'DUO' : 'SOLO'}</span></td>
+    </tr>
+  `).join('');
+
+      document.getElementById('records-tfoot').innerHTML = `
+        <tr style="font-weight:bold;background:rgba(0,180,216,.08);border-top:2px solid var(--border)">
+          <td colspan="3" style="text-align:right">TOTAL:</td>
+          <td><span style="font-family:'DM Mono',monospace;color:var(--gold);font-size:14px">${totalCases}</span></td>
+          <td colspan="3"></td>
+        </tr>
+      `;
+    }
+
+    function populateFilterSP() {
+      const sel = document.getElementById('filter-sp');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">All</option>' + state.salespersons.map(s => `<option value="${s}" ${s === cur ? 'selected' : ''}>${s}</option>`).join('');
+    }
+
+    function clearFilters() {
+      document.getElementById('filter-from').value = '';
+      document.getElementById('filter-to').value = '';
+      document.getElementById('filter-sp').value = '';
+      document.getElementById('filter-party').value = '';
+      renderRecords();
+    }
+
+    function clearSPFilters() {
+      document.getElementById('sp-filter-from').value = '';
+      document.getElementById('sp-filter-to').value = '';
+      renderSPPanel();
+    }
+
+    // ── SALESPERSON PANEL ──────────────────────────────────────
+    function renderSPPanel() {
+      const from = document.getElementById('sp-filter-from').value;
+      const to = document.getElementById('sp-filter-to').value;
+
+      let entries = [...state.entries];
+      if (from) entries = entries.filter(e => e.date >= from);
+      if (to) entries = entries.filter(e => e.date <= to);
+
+      // total per SP (duo entries split by counting each SP once, not dividing cases)
+      // Individual: cases where they are SOLO
+      // Duo: cases where they are part of DUO
+      const spData = {};
+      state.salespersons.forEach(s => { spData[s] = { solo: 0, duo: 0, total: 0 } });
+
+      entries.forEach(e => {
+        e.sp.forEach(s => {
+          if (!spData[s]) spData[s] = { solo: 0, duo: 0, total: 0 };
+          if (e.sp.length === 1) {
+            spData[s].solo += e.cases;
+            spData[s].total += e.cases;
+          } else {
+            const share = e.cases / e.sp.length;
+            spData[s].duo += share;
+            spData[s].total += share;
+          }
+        });
+      });
+
+      const maxTotal = Math.max(...Object.values(spData).map(s => s.total), 1);
+
+      const grid = document.getElementById('sp-grid');
+      grid.innerHTML = Object.entries(spData).map(([name, d]) => `
+    <div class="sp-card">
+      <div class="sp-name">${name}</div>
+      <div class="sp-cases">Total: <strong>${parseFloat(d.total.toFixed(2))}</strong> cases</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">
+        Solo: <span style="color:var(--accent2)">${parseFloat(d.solo.toFixed(2))}</span> &nbsp;|&nbsp;
+        Duo: <span style="color:var(--gold)">${parseFloat(d.duo.toFixed(2))}</span>
+      </div>
+      <div class="sp-bar-wrap"><div class="sp-bar" style="width:${Math.round(d.total / maxTotal * 100)}%"></div></div>
+    </div>
+  `).join('');
+
+      // sp × party breakdown (grouped by combined salesperson name to prevent confusion)
+      const breakdown = {};
+      entries.forEach(e => {
+        const spName = e.sp.join(' & ');
+        const key = spName + '||' + e.party;
+        if (!breakdown[key]) {
+          breakdown[key] = { sp: spName, party: e.party, cases: 0, isDuo: e.sp.length > 1 };
+        }
+        breakdown[key].cases += e.cases;
+      });
+
+      const rows = Object.values(breakdown).sort((a, b) => a.sp.localeCompare(b.sp) || b.cases - a.cases);
+      const tbody = document.getElementById('sp-party-tbody');
+      const tfoot = document.getElementById('sp-party-tfoot');
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No data</td></tr>';
+        tfoot.innerHTML = '';
+        return;
+      }
+      tbody.innerHTML = rows.map((r, idx) => `
+    <tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace">${idx + 1}</td>
+      <td><strong>${r.sp}</strong></td>
+      <td>${r.party}</td>
+      <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${parseFloat(r.cases.toFixed(2))}</span></td>
+      <td><span class="badge ${r.isDuo ? 'badge-gold' : 'badge-blue'}">${r.isDuo ? 'DUO' : 'SOLO'}</span></td>
+    </tr>
+  `).join('');
+
+      const totalSPCases = rows.reduce((s, r) => s + r.cases, 0);
+      tfoot.innerHTML = `
+        <tr style="font-weight:bold;background:rgba(0,180,216,.08);border-top:2px solid var(--border)">
+          <td colspan="3" style="text-align:right">TOTAL:</td>
+          <td><span style="font-family:'DM Mono',monospace;color:var(--gold);font-size:14px">${parseFloat(totalSPCases.toFixed(2))}</span></td>
+          <td></td>
+        </tr>
+      `;
+    }
+
+    // ── ADMIN ──────────────────────────────────────────────────
+    function renderAdmin() {
+      // SP list
+      const spList = document.getElementById('sp-list');
+      spList.innerHTML = state.salespersons.map(s => `
+    <div class="chip">${s}<button class="chip-del" onclick="deleteSP('${s.replace(/'/g, "\\'")}')">×</button></div>
+  `).join('');
+
+      // SP checkboxes for party assignment
+      const cbList = document.getElementById('sp-checkbox-list');
+      cbList.innerHTML = state.salespersons.map(s => `
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+      <input type="checkbox" value="${s}" style="accent-color:var(--accent)"> ${s}
+    </label>
+  `).join('');
+
+      // Party list
+      const partyList = document.getElementById('party-list');
+      partyList.innerHTML = state.parties.map(p => `
+    <div class="chip" style="flex-direction:column;align-items:flex-start;border-radius:10px;padding:8px 12px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-weight:600">${p.name}</span>
+        ${p.sp.length > 1 ? '<span class="duo-tag">DUO</span>' : ''}
+        <button class="chip-del" onclick="deleteParty('${p.name.replace(/'/g, "\\'")}')">×</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">👤 ${p.sp.join(' & ')}</div>
+    </div>
+  `).join('');
+    }
+
+    async function addSP() {
+      const name = document.getElementById('new-sp-name').value.trim();
+      if (!name) { toast('Enter a name', 'error'); return; }
+      if (state.salespersons.includes(name)) { toast('Already exists', 'error'); return; }
+      await addDocFb('salespersons', { name });
+      document.getElementById('new-sp-name').value = '';
+      toast(`${name} added`);
+    }
+
+    async function deleteSP(name) {
+      const pin = prompt(`Enter PIN to delete salesperson "${name}":`);
+      if (pin === null) return;
+      if (pin !== '1163') {
+        toast('Invalid PIN', 'error');
+        return;
+      }
+      await deleteDocFb('salespersons', 'name', name);
+      toast(`${name} removed`);
+    }
+
+    async function addParty() {
+      const name = document.getElementById('new-party-name').value.trim();
+      const checked = [...document.querySelectorAll('#sp-checkbox-list input:checked')].map(c => c.value);
+      if (!name) { toast('Enter party name', 'error'); return; }
+      if (!checked.length) { toast('Select at least one salesperson', 'error'); return; }
+      if (state.parties.find(p => p.name.toLowerCase() === name.toLowerCase())) { toast('Party already exists', 'error'); return; }
+      await addDocFb('parties', { name, sp: checked });
+      document.getElementById('new-party-name').value = '';
+      document.querySelectorAll('#sp-checkbox-list input').forEach(c => c.checked = false);
+      toast(`${name} added`);
+    }
+
+    async function deleteParty(name) {
+      const pin = prompt(`Enter PIN to delete party "${name}":`);
+      if (pin === null) return;
+      if (pin !== '1163') {
+        toast('Invalid PIN', 'error');
+        return;
+      }
+      await deleteDocFb('parties', 'name', name);
+      toast(`${name} removed`);
+    }
+
+    // ── ADMIN AUTH ─────────────────────────────────────────────
+    function openAdminModal() {
+      if (adminUnlocked) { showTab('admin'); return; }
+      document.getElementById('admin-pwd').value = '';
+      openModal('admin-modal');
+    }
+    function checkAdmin() {
+      if (document.getElementById('admin-pwd').value === ADMIN_PASS) {
+        adminUnlocked = true;
+        closeModal('admin-modal');
+        document.getElementById('tab-admin').style.display = '';
+        showTab('admin');
+        toast('Admin unlocked 🔓');
+      } else {
+        toast('Wrong password', 'error');
+        document.getElementById('admin-pwd').value = '';
+      }
+    }
+
+    // ── MODAL ──────────────────────────────────────────────────
+    function openModal(id) { document.getElementById(id).classList.add('show') }
+    function closeModal(id) { document.getElementById(id).classList.remove('show') }
+    document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show') }));
+
+    // ── TOAST ──────────────────────────────────────────────────
+    let toastTimer;
+    function toast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.style.background = type === 'error' ? 'var(--red)' : 'var(--green)';
+      el.style.color = type === 'error' ? '#fff' : '#000';
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    // ── THEME TOGGLE ──────────────────────────────────────────
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-mode');
+      const btn = document.getElementById('theme-btn');
+      if (isLight) {
+        btn.textContent = '🌙 Dark';
+        localStorage.setItem('theme', 'light');
+      } else {
+        btn.textContent = '☀️ Light';
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Restore theme
+    (function () {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        window.addEventListener('DOMContentLoaded', () => {
+          const btn = document.getElementById('theme-btn');
+          if (btn) btn.textContent = '🌙 Dark';
+        });
+      }
+    })();
+
+    // ── INIT ──────────────────────────────────────────────────
+    setTodayDate();
+    renderDashboard();
+    renderTodayEntries();
+    setupRealtimeSync().catch(console.error);
+  </script>
+</body>
+
+</html>
