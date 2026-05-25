@@ -745,6 +745,51 @@
       font-weight: 600;
       letter-spacing: .5px
     }
+
+    /* party group styling */
+    .party-group {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      transition: all 0.2s ease;
+    }
+
+    body.light-mode .party-group {
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    .party-group:hover {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    body.light-mode .party-group:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .party-group-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--accent2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      border-bottom: 1px solid rgba(30, 58, 95, 0.3);
+      padding-bottom: 8px;
+    }
+
+    .party-group-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--gold);
+      background: rgba(244, 162, 97, 0.12);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
   </style>
 </head>
 
@@ -1001,7 +1046,7 @@
             <div id="sp-checkbox-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
           </div>
           <button class="btn btn-primary" onclick="addParty()" style="width:100%">Add Party</button>
-          <div class="chip-list" id="party-list" style="margin-top:14px"></div>
+          <div id="party-list" style="margin-top:16px; display:flex; flex-direction:column; gap:16px"></div>
         </div>
       </div>
       <div class="admin-note" style="margin-top:16px">⚠️ Changes here are permanent and affect all future entries.
@@ -1463,18 +1508,95 @@
     </label>
   `).join('');
 
-      // Party list
+      // Party list (grouped organically by salesperson / specific duo pairs)
       const partyList = document.getElementById('party-list');
-      partyList.innerHTML = state.parties.map(p => `
-    <div class="chip" style="flex-direction:column;align-items:flex-start;border-radius:10px;padding:8px 12px">
-      <div style="display:flex;align-items:center;gap:6px">
-        <span style="font-weight:600">${p.name}</span>
-        ${p.sp.length > 1 ? '<span class="duo-tag">DUO</span>' : ''}
-        <button class="chip-del" onclick="deleteParty('${p.name.replace(/'/g, "\\'")}')">×</button>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">👤 ${p.sp.join(' & ')}</div>
-    </div>
-  `).join('');
+
+      const groups = {};
+      state.salespersons.forEach(sp => { groups[sp] = []; });
+      groups['Unassigned'] = [];
+
+      state.parties.forEach(p => {
+        if (!p.sp || p.sp.length === 0) {
+          groups['Unassigned'].push(p);
+        } else if (p.sp.length === 1) {
+          const sp = p.sp[0];
+          if (groups[sp]) {
+            groups[sp].push(p);
+          } else {
+            groups[sp] = [p];
+          }
+        } else {
+          // Specific duo/trio partnership pair!
+          // Sort alphabetically to maintain consistent pair keys (e.g. "Pratap & Sushil")
+          const pairKey = [...p.sp].sort().join(' & ');
+          if (!groups[pairKey]) {
+            groups[pairKey] = [];
+          }
+          groups[pairKey].push(p);
+        }
+      });
+
+      function renderPartyGroup(title, parties, isDuo) {
+        const count = parties.length;
+        let chipsHtml = '';
+        if (count === 0) {
+          chipsHtml = `<div style="font-size:12px;color:var(--muted);font-style:italic;padding:4px 8px;">No parties assigned</div>`;
+        } else {
+          chipsHtml = parties.map(p => `
+            <div class="chip" style="flex-direction:column;align-items:flex-start;border-radius:10px;padding:8px 12px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-weight:600">${p.name}</span>
+                ${p.sp.length > 1 ? '<span class="duo-tag">DUO</span>' : ''}
+                <button class="chip-del" onclick="deleteParty('${p.name.replace(/'/g, "\\'")}')">×</button>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">👤 ${p.sp.join(' & ')}</div>
+            </div>
+          `).join('');
+        }
+
+        let icon = '👤';
+        if (isDuo || title.includes('&') || title.toLowerCase().includes('duo') || title.toLowerCase().includes('combined')) {
+          icon = '👥';
+        } else if (title.toLowerCase().includes('unassigned')) {
+          icon = '❓';
+        }
+
+        return `
+          <div class="party-group">
+            <div class="party-group-title">
+              <span>${icon} ${title} Parties</span>
+              <span class="party-group-count">${count}</span>
+            </div>
+            <div class="chip-list" style="margin-top:8px">
+              ${chipsHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      let html = '';
+
+      // 1. Render standard individual salespersons
+      state.salespersons.forEach(sp => {
+        html += renderPartyGroup(sp, groups[sp] || [], false);
+      });
+
+      // 2. Render specific Duo partnerships and deleted salespersons
+      const standardKeys = new Set([...state.salespersons, 'Unassigned']);
+
+      // Find all custom keys (including the "A & B" duo keys) and sort them alphabetically
+      const extraKeys = Object.keys(groups).filter(key => !standardKeys.has(key) && groups[key].length > 0);
+      extraKeys.sort().forEach(key => {
+        const isDuo = key.includes('&');
+        html += renderPartyGroup(key, groups[key], isDuo);
+      });
+
+      // 3. Render unassigned parties if there are any
+      if (groups['Unassigned'] && groups['Unassigned'].length > 0) {
+        html += renderPartyGroup('Unassigned', groups['Unassigned'], false);
+      }
+
+      partyList.innerHTML = html;
     }
 
     async function addSP() {
