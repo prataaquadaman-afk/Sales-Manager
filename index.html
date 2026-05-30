@@ -964,8 +964,12 @@
         <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
       </div>
       <div class="card">
-        <div class="card-title"><span>📋</span> All Records <span id="records-count"
-            style="color:var(--muted);font-size:11px"></span></div>
+        <div class="card-title"
+          style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <span><span>📋</span> All Records <span id="records-count"
+              style="color:var(--muted);font-size:11px"></span></span>
+          <button class="btn btn-ghost btn-sm" onclick="exportRecordsToExcel()">⬇ Export Excel</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -1002,7 +1006,11 @@
 
       <!-- per-party breakdown -->
       <div class="card" style="margin-top:24px">
-        <div class="card-title"><span>📊</span> Cases by Salesperson × Party</div>
+        <div class="card-title"
+          style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <span><span>📊</span> Cases by Salesperson × Party</span>
+          <button class="btn btn-ghost btn-sm" onclick="exportSPPartyToExcel()">⬇ Export Excel</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -1036,7 +1044,11 @@
 
         <!-- Parties -->
         <div class="card">
-          <div class="card-title"><span>🏪</span> Manage Parties</div>
+          <div class="card-title"
+            style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <span><span>🏪</span> Manage Parties</span>
+            <button class="btn btn-ghost btn-sm" onclick="exportPartiesToExcel()">⬇ Export Excel</button>
+          </div>
           <div class="form-group" style="margin-bottom:10px">
             <label>Party Name</label>
             <input class="input" id="new-party-name" placeholder="Party name…">
@@ -1676,6 +1688,158 @@
       el.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    // ── EXPORT TO EXCEL HELPERS ────────────────────────────────
+    function exportPartiesToExcel() {
+      const parties = state.parties || [];
+      if (!parties.length) { toast('No parties to export', 'error'); return; }
+
+      // Organically group parties just like renderAdmin() does
+      const groups = {};
+      state.salespersons.forEach(sp => { groups[sp] = []; });
+      groups['Unassigned'] = [];
+
+      parties.forEach(p => {
+        if (!p.sp || p.sp.length === 0) {
+          groups['Unassigned'].push(p);
+        } else if (p.sp.length === 1) {
+          const sp = p.sp[0];
+          if (groups[sp]) {
+            groups[sp].push(p);
+          } else {
+            groups[sp] = [p];
+          }
+        } else {
+          const pairKey = [...p.sp].sort().join(' & ');
+          if (!groups[pairKey]) {
+            groups[pairKey] = [];
+          }
+          groups[pairKey].push(p);
+        }
+      });
+
+      const headers = ['Salesperson / Duo Group', 'Party Name', 'Type'];
+      const rows = [];
+
+      // 1. Individual salespersons
+      state.salespersons.forEach(sp => {
+        const list = groups[sp] || [];
+        list.forEach(p => {
+          rows.push([sp, p.name, 'SOLO']);
+        });
+      });
+
+      // 2. Duo partnerships
+      const standardKeys = new Set([...state.salespersons, 'Unassigned']);
+      const extraKeys = Object.keys(groups).filter(key => !standardKeys.has(key) && groups[key].length > 0);
+      extraKeys.sort().forEach(key => {
+        const list = groups[key] || [];
+        list.forEach(p => {
+          rows.push([key, p.name, 'DUO']);
+        });
+      });
+
+      // 3. Unassigned
+      if (groups['Unassigned'] && groups['Unassigned'].length > 0) {
+        groups['Unassigned'].forEach(p => {
+          rows.push(['Unassigned', p.name, 'UNASSIGNED']);
+        });
+      }
+
+      let csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Prata_Aqua_Parties_List_Grouped.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('Parties exported (grouped)');
+    }
+
+    function exportRecordsToExcel() {
+      let entries = [...state.entries];
+      const from = document.getElementById('filter-from').value;
+      const to = document.getElementById('filter-to').value;
+      const sp = document.getElementById('filter-sp').value;
+      const party = document.getElementById('filter-party').value.trim().toLowerCase();
+
+      if (from) entries = entries.filter(e => e.date >= from);
+      if (to) entries = entries.filter(e => e.date <= to);
+      if (sp) entries = entries.filter(e => e.sp.includes(sp));
+      if (party) entries = entries.filter(e => e.party.toLowerCase().includes(party));
+
+      entries.sort((a, b) => b.date.localeCompare(a.date) || (b.id - a.id));
+
+      if (!entries.length) { toast('No records to export', 'error'); return; }
+
+      const headers = ['Sr.', 'Date', 'Party', 'Cases', 'Salesperson(s)', 'Type'];
+      const rows = entries.map((e, idx) => [
+        idx + 1,
+        e.date,
+        e.party,
+        e.cases,
+        e.sp.join(' & '),
+        e.sp.length > 1 ? 'DUO' : 'SOLO'
+      ]);
+
+      let csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Prata_Aqua_Records.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('Records exported');
+    }
+
+    function exportSPPartyToExcel() {
+      const from = document.getElementById('sp-filter-from').value;
+      const to = document.getElementById('sp-filter-to').value;
+
+      let entries = [...state.entries];
+      if (from) entries = entries.filter(e => e.date >= from);
+      if (to) entries = entries.filter(e => e.date <= to);
+
+      const breakdown = {};
+      entries.forEach(e => {
+        const spName = e.sp.join(' & ');
+        const key = spName + '||' + e.party;
+        if (!breakdown[key]) {
+          breakdown[key] = { sp: spName, party: e.party, cases: 0, isDuo: e.sp.length > 1 };
+        }
+        breakdown[key].cases += e.cases;
+      });
+
+      const rows = Object.values(breakdown).sort((a, b) => a.sp.localeCompare(b.sp) || b.cases - a.cases);
+      if (!rows.length) { toast('No salesperson breakdown to export', 'error'); return; }
+
+      const headers = ['Sr.', 'Salesperson', 'Party', 'Total Cases', 'Type'];
+      const csvRows = rows.map((r, idx) => [
+        idx + 1,
+        r.sp,
+        r.party,
+        parseFloat(r.cases.toFixed(2)),
+        r.isDuo ? 'DUO' : 'SOLO'
+      ]);
+
+      let csv = [headers, ...csvRows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Prata_Aqua_Salesperson_Party_Breakdown.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('Breakdown exported');
     }
 
     // ── THEME TOGGLE ──────────────────────────────────────────
