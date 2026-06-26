@@ -1022,29 +1022,106 @@
         </div>
         <button class="btn btn-ghost btn-sm" onclick="clearSPFilters()">✕ Clear</button>
       </div>
-      <div class="sp-grid" id="sp-grid"></div>
 
-      <!-- per-party breakdown -->
-      <div class="card" style="margin-top:24px">
-        <div class="card-title"
-          style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <span><span>📊</span> Cases by Salesperson × Party</span>
-          <button class="btn btn-ghost btn-sm" onclick="exportSPPartyToExcel()">⬇ Export Excel</button>
+      <!-- ── PA Product Section ── -->
+      <div style="margin-bottom:32px;">
+        <div
+          style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--accent);">
+          <span
+            style="background:rgba(0,180,216,.18);color:var(--accent2);font-weight:700;font-size:13px;padding:4px 14px;border-radius:20px;letter-spacing:1px;">PA</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--accent2);">PA
+            Product — Salesperson Performance</span>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:50px">Sr.</th>
-                <th>Salesperson</th>
-                <th>Party</th>
-                <th>Total Cases</th>
-                <th>Type</th>
-              </tr>
-            </thead>
-            <tbody id="sp-party-tbody"></tbody>
-            <tfoot id="sp-party-tfoot"></tfoot>
-          </table>
+        <div class="sp-grid" id="sp-grid-pa"></div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-title"
+            style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span>📊 PA Cases by Salesperson × Party</span>
+            <button class="btn btn-ghost btn-sm" onclick="exportSPPartyProductToExcel('PA')">⬇ Export Excel</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px">Sr.</th>
+                  <th>Salesperson</th>
+                  <th>Party</th>
+                  <th>PA Cases</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody id="sp-party-tbody-pa"></tbody>
+              <tfoot id="sp-party-tfoot-pa"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PS Product Section ── -->
+      <div style="margin-bottom:32px;">
+        <div
+          style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--green);">
+          <span
+            style="background:rgba(38,208,124,.15);color:var(--green);font-weight:700;font-size:13px;padding:4px 14px;border-radius:20px;letter-spacing:1px;">PS</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--green);">PS
+            Product — Salesperson Performance</span>
+        </div>
+        <div class="sp-grid" id="sp-grid-ps"></div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-title"
+            style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span>📊 PS Cases by Salesperson × Party</span>
+            <button class="btn btn-ghost btn-sm" onclick="exportSPPartyProductToExcel('PS')">⬇ Export Excel</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px">Sr.</th>
+                  <th>Salesperson</th>
+                  <th>Party</th>
+                  <th>PS Cases</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody id="sp-party-tbody-ps"></tbody>
+              <tfoot id="sp-party-tfoot-ps"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Overall Combined ── -->
+      <div>
+        <div
+          style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--gold);">
+          <span
+            style="background:rgba(244,162,97,.18);color:var(--gold);font-weight:700;font-size:13px;padding:4px 14px;border-radius:20px;letter-spacing:1px;">ALL</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--gold);">Overall
+            Combined (PA + PS)</span>
+        </div>
+        <div class="sp-grid" id="sp-grid"></div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-title"
+            style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span>📊 All Cases by Salesperson × Party</span>
+            <button class="btn btn-ghost btn-sm" onclick="exportSPPartyToExcel()">⬇ Export Excel</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px">Sr.</th>
+                  <th>Salesperson</th>
+                  <th>Party</th>
+                  <th>Total Cases</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody id="sp-party-tbody"></tbody>
+              <tfoot id="sp-party-tfoot"></tfoot>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -1449,20 +1526,9 @@
     }
 
     // ── SALESPERSON PANEL ──────────────────────────────────────
-    function renderSPPanel() {
-      const from = document.getElementById('sp-filter-from').value;
-      const to = document.getElementById('sp-filter-to').value;
-
-      let entries = [...state.entries];
-      if (from) entries = entries.filter(e => e.date >= from);
-      if (to) entries = entries.filter(e => e.date <= to);
-
-      // total per SP (duo entries split by counting each SP once, not dividing cases)
-      // Individual: cases where they are SOLO
-      // Duo: cases where they are part of DUO
+    function buildSPData(entries) {
       const spData = {};
       state.salespersons.forEach(s => { spData[s] = { solo: 0, duo: 0, total: 0 } });
-
       entries.forEach(e => {
         e.sp.forEach(s => {
           if (!spData[s]) spData[s] = { solo: 0, duo: 0, total: 0 };
@@ -1476,59 +1542,87 @@
           }
         });
       });
+      return spData;
+    }
 
+    function renderSPCards(gridId, spData, barColor) {
       const maxTotal = Math.max(...Object.values(spData).map(s => s.total), 1);
+      const grid = document.getElementById(gridId);
+      if (!grid) return;
+      const hasData = Object.values(spData).some(d => d.total > 0);
+      if (!hasData) {
+        grid.innerHTML = '<div class="empty" style="padding:20px 0"><span>📦</span>No entries for this product</div>';
+        return;
+      }
+      grid.innerHTML = Object.entries(spData)
+        .filter(([, d]) => d.total > 0)
+        .sort((a, b) => b[1].total - a[1].total)
+        .map(([name, d]) => `
+        <div class="sp-card">
+          <div class="sp-name">${name}</div>
+          <div class="sp-cases">Total: <strong>${parseFloat(d.total.toFixed(2))}</strong> cases</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">
+            Solo: <span style="color:var(--accent2)">${parseFloat(d.solo.toFixed(2))}</span> &nbsp;|&nbsp;
+            Duo: <span style="color:var(--gold)">${parseFloat(d.duo.toFixed(2))}</span>
+          </div>
+          <div class="sp-bar-wrap"><div class="sp-bar" style="width:${Math.round(d.total / maxTotal * 100)}%;background:${barColor || 'linear-gradient(90deg,var(--accent),var(--accent2))'}"></div></div>
+        </div>
+      `).join('');
+    }
 
-      const grid = document.getElementById('sp-grid');
-      grid.innerHTML = Object.entries(spData).map(([name, d]) => `
-    <div class="sp-card">
-      <div class="sp-name">${name}</div>
-      <div class="sp-cases">Total: <strong>${parseFloat(d.total.toFixed(2))}</strong> cases</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px">
-        Solo: <span style="color:var(--accent2)">${parseFloat(d.solo.toFixed(2))}</span> &nbsp;|&nbsp;
-        Duo: <span style="color:var(--gold)">${parseFloat(d.duo.toFixed(2))}</span>
-      </div>
-      <div class="sp-bar-wrap"><div class="sp-bar" style="width:${Math.round(d.total / maxTotal * 100)}%"></div></div>
-    </div>
-  `).join('');
-
-      // sp × party breakdown (grouped by combined salesperson name to prevent confusion)
+    function renderSPBreakdown(tbodyId, tfootId, entries) {
       const breakdown = {};
       entries.forEach(e => {
         const spName = e.sp.join(' & ');
         const key = spName + '||' + e.party;
-        if (!breakdown[key]) {
-          breakdown[key] = { sp: spName, party: e.party, cases: 0, isDuo: e.sp.length > 1 };
-        }
+        if (!breakdown[key]) breakdown[key] = { sp: spName, party: e.party, cases: 0, isDuo: e.sp.length > 1 };
         breakdown[key].cases += e.cases;
       });
-
       const rows = Object.values(breakdown).sort((a, b) => a.sp.localeCompare(b.sp) || b.cases - a.cases);
-      const tbody = document.getElementById('sp-party-tbody');
-      const tfoot = document.getElementById('sp-party-tfoot');
-      if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty">No data</td></tr>';
-        tfoot.innerHTML = '';
-        return;
-      }
+      const tbody = document.getElementById(tbodyId);
+      const tfoot = document.getElementById(tfootId);
+      if (!tbody || !tfoot) return;
+      if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No data</td></tr>'; tfoot.innerHTML = ''; return; }
       tbody.innerHTML = rows.map((r, idx) => `
-    <tr>
-      <td style="color:var(--muted);font-family:'DM Mono',monospace">${idx + 1}</td>
-      <td><strong>${r.sp}</strong></td>
-      <td>${r.party}</td>
-      <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${parseFloat(r.cases.toFixed(2))}</span></td>
-      <td><span class="badge ${r.isDuo ? 'badge-gold' : 'badge-blue'}">${r.isDuo ? 'DUO' : 'SOLO'}</span></td>
-    </tr>
-  `).join('');
-
-      const totalSPCases = rows.reduce((s, r) => s + r.cases, 0);
+        <tr>
+          <td style="color:var(--muted);font-family:'DM Mono',monospace">${idx + 1}</td>
+          <td><strong>${r.sp}</strong></td>
+          <td>${r.party}</td>
+          <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${parseFloat(r.cases.toFixed(2))}</span></td>
+          <td><span class="badge ${r.isDuo ? 'badge-gold' : 'badge-blue'}">${r.isDuo ? 'DUO' : 'SOLO'}</span></td>
+        </tr>
+      `).join('');
+      const total = rows.reduce((s, r) => s + r.cases, 0);
       tfoot.innerHTML = `
         <tr style="font-weight:bold;background:rgba(0,180,216,.08);border-top:2px solid var(--border)">
           <td colspan="3" style="text-align:right">TOTAL:</td>
-          <td><span style="font-family:'DM Mono',monospace;color:var(--gold);font-size:14px">${parseFloat(totalSPCases.toFixed(2))}</span></td>
+          <td><span style="font-family:'DM Mono',monospace;color:var(--gold);font-size:14px">${parseFloat(total.toFixed(2))}</span></td>
           <td></td>
-        </tr>
-      `;
+        </tr>`;
+    }
+
+    function renderSPPanel() {
+      const from = document.getElementById('sp-filter-from').value;
+      const to = document.getElementById('sp-filter-to').value;
+
+      let entries = [...state.entries];
+      if (from) entries = entries.filter(e => e.date >= from);
+      if (to) entries = entries.filter(e => e.date <= to);
+
+      const paEntries = entries.filter(e => e.product === 'PA');
+      const psEntries = entries.filter(e => e.product === 'PS');
+
+      // PA section
+      renderSPCards('sp-grid-pa', buildSPData(paEntries), 'linear-gradient(90deg,var(--accent),var(--accent2))');
+      renderSPBreakdown('sp-party-tbody-pa', 'sp-party-tfoot-pa', paEntries);
+
+      // PS section
+      renderSPCards('sp-grid-ps', buildSPData(psEntries), 'linear-gradient(90deg,var(--green),#90e0ef)');
+      renderSPBreakdown('sp-party-tbody-ps', 'sp-party-tfoot-ps', psEntries);
+
+      // Overall combined
+      renderSPCards('sp-grid', buildSPData(entries), 'linear-gradient(90deg,var(--gold),#f4d03f)');
+      renderSPBreakdown('sp-party-tbody', 'sp-party-tfoot', entries);
     }
 
     // ── ADMIN ──────────────────────────────────────────────────
@@ -1868,6 +1962,50 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast('Breakdown exported');
+    }
+
+    function exportSPPartyProductToExcel(product) {
+      const from = document.getElementById('sp-filter-from').value;
+      const to = document.getElementById('sp-filter-to').value;
+
+      let entries = [...state.entries];
+      if (from) entries = entries.filter(e => e.date >= from);
+      if (to) entries = entries.filter(e => e.date <= to);
+      entries = entries.filter(e => e.product === product);
+
+      if (!entries.length) { toast(`No ${product} entries to export`, 'error'); return; }
+
+      const breakdown = {};
+      entries.forEach(e => {
+        const spName = e.sp.join(' & ');
+        const key = spName + '||' + e.party;
+        if (!breakdown[key]) {
+          breakdown[key] = { sp: spName, party: e.party, cases: 0, isDuo: e.sp.length > 1 };
+        }
+        breakdown[key].cases += e.cases;
+      });
+
+      const rows = Object.values(breakdown).sort((a, b) => a.sp.localeCompare(b.sp) || b.cases - a.cases);
+      const headers = ['Sr.', 'Salesperson', 'Party', `${product} Cases`, 'Type'];
+      const csvRows = rows.map((r, idx) => [
+        idx + 1,
+        r.sp,
+        r.party,
+        parseFloat(r.cases.toFixed(2)),
+        r.isDuo ? 'DUO' : 'SOLO'
+      ]);
+
+      let csv = [headers, ...csvRows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Prata_Aqua_${product}_Salesperson_Breakdown.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast(`${product} breakdown exported`);
     }
 
     // ── THEME TOGGLE ──────────────────────────────────────────
