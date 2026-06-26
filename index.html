@@ -327,7 +327,7 @@
     /* ── FORM ── */
     .form-row {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
+      grid-template-columns: 1fr 1fr 1fr 1fr auto;
       gap: 12px;
       align-items: end;
       margin-bottom: 14px
@@ -337,6 +337,16 @@
       .form-row {
         grid-template-columns: 1fr 1fr;
       }
+    }
+
+    .badge-accent {
+      background: rgba(0, 180, 216, .18);
+      color: var(--accent2)
+    }
+
+    .badge-green {
+      background: rgba(38, 208, 124, .15);
+      color: var(--green)
     }
 
     .form-group {
@@ -898,6 +908,14 @@
               style="font-family:'DM Mono',monospace">
           </div>
           <div class="form-group">
+            <label>Product</label>
+            <select class="input" id="entry-product" style="border-color:var(--accent);font-weight:600">
+              <option value="">— Select —</option>
+              <option value="PA">PA</option>
+              <option value="PS">PS</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Date</label>
             <input class="input" id="entry-date" type="date">
           </div>
@@ -919,6 +937,7 @@
               <tr>
                 <th>Party</th>
                 <th>Cases</th>
+                <th>Product</th>
                 <th>Salesperson(s)</th>
                 <th>Type</th>
                 <th>Time</th>
@@ -927,7 +946,7 @@
             </thead>
             <tbody id="today-tbody">
               <tr>
-                <td colspan="6" class="empty">No entries today</td>
+                <td colspan="7" class="empty">No entries today</td>
               </tr>
             </tbody>
           </table>
@@ -978,6 +997,7 @@
                 <th>Date</th>
                 <th>Party</th>
                 <th>Cases</th>
+                <th>Product</th>
                 <th>Salesperson(s)</th>
                 <th>Type</th>
               </tr>
@@ -1161,7 +1181,8 @@
           cases: d.data().cases,
           sp: d.data().sp,
           date: d.data().date,
-          time: d.data().time
+          time: d.data().time,
+          product: d.data().product || ''
         })).sort((a, b) => b.id - a.id);
         saveState();
         refreshCurrentTab();
@@ -1251,10 +1272,12 @@
     async function submitEntry() {
       const partyName = document.getElementById('entry-party').value.trim();
       const cases = parseInt(document.getElementById('entry-cases').value);
+      const product = document.getElementById('entry-product').value;
       const date = document.getElementById('entry-date').value || todayStr();
 
       if (!partyName) { toast('Enter a party name', 'error'); return; }
       if (!cases || cases < 1) { toast('Enter valid cases', 'error'); return; }
+      if (!product) { toast('Please select a Product (PA or PS)', 'error'); return; }
 
       const party = state.parties.find(p => p.name.toLowerCase() === partyName.toLowerCase());
       if (!party) { toast('Party not found. Please use a configured party.', 'error'); return; }
@@ -1263,16 +1286,18 @@
         id: Date.now(),
         party: party.name,
         cases,
+        product,
         sp: party.sp,
         date,
         time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
       };
 
       await addDocFb('entries', entry);
-      toast(`✅ ${cases} cases added for ${party.name}`);
+      toast(`✅ ${cases} cases of ${product} added for ${party.name}`);
 
       document.getElementById('entry-party').value = '';
       document.getElementById('entry-cases').value = '';
+      document.getElementById('entry-product').value = '';
       document.getElementById('party-sp-hint').textContent = '';
     }
 
@@ -1280,11 +1305,12 @@
       const today = todayStr();
       const entries = state.entries.filter(e => e.date === today);
       const tbody = document.getElementById('today-tbody');
-      if (!entries.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No entries today</td></tr>'; return; }
+      if (!entries.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">No entries today</td></tr>'; return; }
       tbody.innerHTML = entries.map(e => `
     <tr>
       <td>${e.party}</td>
       <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${e.cases}</span></td>
+      <td>${e.product ? `<span class="badge ${e.product === 'PA' ? 'badge-blue' : 'badge-green'}">${e.product}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
       <td>${e.sp.join(' & ')}</td>
       <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.length > 1 ? 'DUO' : 'SOLO'}</span></td>
       <td style="color:var(--muted)">${e.time || ''}</td>
@@ -1387,6 +1413,7 @@
       <td style="color:var(--muted)">${e.date}</td>
       <td>${e.party}</td>
       <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${e.cases}</span></td>
+      <td>${e.product ? `<span class="badge ${e.product === 'PA' ? 'badge-blue' : 'badge-green'}">${e.product}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
       <td>${e.sp.join(' & ')}</td>
       <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.length > 1 ? 'DUO' : 'SOLO'}</span></td>
     </tr>
@@ -1396,7 +1423,7 @@
         <tr style="font-weight:bold;background:rgba(0,180,216,.08);border-top:2px solid var(--border)">
           <td colspan="3" style="text-align:right">TOTAL:</td>
           <td><span style="font-family:'DM Mono',monospace;color:var(--gold);font-size:14px">${totalCases}</span></td>
-          <td colspan="3"></td>
+          <td colspan="4"></td>
         </tr>
       `;
     }
@@ -1776,12 +1803,13 @@
 
       if (!entries.length) { toast('No records to export', 'error'); return; }
 
-      const headers = ['Sr.', 'Date', 'Party', 'Cases', 'Salesperson(s)', 'Type'];
+      const headers = ['Sr.', 'Date', 'Party', 'Cases', 'Product', 'Salesperson(s)', 'Type'];
       const rows = entries.map((e, idx) => [
         idx + 1,
         e.date,
         e.party,
         e.cases,
+        e.product || '',
         e.sp.join(' & '),
         e.sp.length > 1 ? 'DUO' : 'SOLO'
       ]);
