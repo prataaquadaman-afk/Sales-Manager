@@ -492,6 +492,36 @@
       color: #c084fc;
     }
 
+    .action-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: .2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .action-btn.edit-btn:hover {
+      color: var(--accent2);
+      background: rgba(0, 180, 216, .18);
+    }
+
+    .action-btn.del-btn {
+      font-size: 15px;
+    }
+
+    .action-btn.del-btn:hover,
+    .del-btn:hover {
+      color: var(--red);
+      background: rgba(255, 107, 107, .1);
+    }
+
     .del-btn {
       background: none;
       border: none;
@@ -501,11 +531,6 @@
       border-radius: 6px;
       font-size: 15px;
       transition: .2s
-    }
-
-    .del-btn:hover {
-      color: var(--red);
-      background: rgba(255, 107, 107, .1)
     }
 
     /* ── SALESPERSON LEADERBOARD ── */
@@ -1015,6 +1040,7 @@
                 <th>Product</th>
                 <th>Salesperson(s)</th>
                 <th>Type</th>
+                <th style="text-align:center;width:90px">Action</th>
               </tr>
             </thead>
             <tbody id="records-tbody"></tbody>
@@ -1211,6 +1237,47 @@
         Existing records remain unchanged.</div>
     </div>
 
+  </div>
+
+  <!-- EDIT RECORD MODAL -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal" style="max-width:460px">
+      <h3>✏️ Edit Record</h3>
+      <p>Modify record details below and click Save Changes.</p>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group">
+          <label>Date</label>
+          <input class="input" id="edit-date" type="date">
+        </div>
+        <div class="form-group">
+          <label>Party Name</label>
+          <div class="autocomplete-wrap">
+            <input class="input" id="edit-party" placeholder="Type party name…" autocomplete="off"
+              oninput="editPartyAC(this)" onkeydown="acKey(event,'edit-party-ac')">
+            <div class="autocomplete-list" id="edit-party-ac"></div>
+          </div>
+          <div class="party-sp" id="edit-sp-hint"></div>
+        </div>
+        <div class="form-group">
+          <label>Cases</label>
+          <input class="input" id="edit-cases" type="number" min="1" placeholder="e.g. 10"
+            style="font-family:'DM Mono',monospace">
+        </div>
+        <div class="form-group">
+          <label>Product</label>
+          <select class="input" id="edit-product" style="border-color:var(--accent);font-weight:600">
+            <option value="">— Select —</option>
+            <option value="PA">PA</option>
+            <option value="PS">PS</option>
+            <option value="PE">PE</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('edit-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditEntry()">Save Changes</button>
+      </div>
+    </div>
   </div>
 
   <!-- ADMIN AUTH MODAL -->
@@ -1448,7 +1515,12 @@
       <td>${e.sp.join(' & ')}</td>
       <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.length > 1 ? 'DUO' : 'SOLO'}</span></td>
       <td style="color:var(--muted)">${e.time || ''}</td>
-      <td><button class="del-btn" onclick="deleteEntry(${e.id})" title="Delete">🗑</button></td>
+      <td style="text-align:right">
+        <div style="display:inline-flex;gap:4px">
+          <button class="action-btn edit-btn" onclick="openEditModal(${e.id})" title="Edit Record">✏️</button>
+          <button class="action-btn del-btn" onclick="deleteEntry(${e.id})" title="Delete Record">🗑</button>
+        </div>
+      </td>
     </tr>
   `).join('');
     }
@@ -1517,6 +1589,101 @@
   `).join('');
     }
 
+    // ── EDIT RECORD LOGIC ─────────────────────────────────────
+    let editingEntryId = null;
+
+    function editPartyAC(input) {
+      const val = input.value.trim().toLowerCase();
+      const list = document.getElementById('edit-party-ac');
+      document.getElementById('edit-sp-hint').textContent = '';
+      if (!val) { list.classList.remove('show'); return; }
+      const matches = state.parties.filter(p => p.name.toLowerCase().includes(val));
+      if (!matches.length) { list.classList.remove('show'); return; }
+      list.innerHTML = matches.map(p => `<div class="autocomplete-item" onclick="selectEditParty('${p.name.replace(/'/g, "\\'")}')">${p.name}<span class="duo-tag" style="display:${p.sp.length > 1 ? 'inline' : 'none'}">DUO</span><br><small style="color:var(--muted)">${p.sp.join(' & ')}</small></div>`).join('');
+      list.classList.add('show');
+    }
+
+    function selectEditParty(name) {
+      document.getElementById('edit-party').value = name;
+      document.getElementById('edit-party-ac').classList.remove('show');
+      const p = state.parties.find(x => x.name === name);
+      if (p) document.getElementById('edit-sp-hint').textContent = '👤 ' + p.sp.join(' & ');
+    }
+
+    function openEditModal(id) {
+      const entry = state.entries.find(e => e.id === id);
+      if (!entry) { toast('Record not found', 'error'); return; }
+      editingEntryId = id;
+      document.getElementById('edit-date').value = entry.date || todayStr();
+      document.getElementById('edit-party').value = entry.party || '';
+      document.getElementById('edit-cases').value = entry.cases || '';
+      document.getElementById('edit-product').value = entry.product || '';
+      document.getElementById('edit-party-ac').classList.remove('show');
+
+      const p = state.parties.find(x => x.name.toLowerCase() === (entry.party || '').toLowerCase());
+      if (p) {
+        document.getElementById('edit-sp-hint').textContent = '👤 ' + p.sp.join(' & ');
+      } else if (entry.sp && entry.sp.length) {
+        document.getElementById('edit-sp-hint').textContent = '👤 ' + entry.sp.join(' & ');
+      } else {
+        document.getElementById('edit-sp-hint').textContent = '';
+      }
+
+      openModal('edit-modal');
+    }
+
+    async function saveEditEntry() {
+      if (!editingEntryId) return;
+      const partyName = document.getElementById('edit-party').value.trim();
+      const cases = parseInt(document.getElementById('edit-cases').value);
+      const product = document.getElementById('edit-product').value;
+      const date = document.getElementById('edit-date').value;
+
+      if (!date) { toast('Please select a date', 'error'); return; }
+      if (!partyName) { toast('Enter a party name', 'error'); return; }
+      if (!cases || cases < 1) { toast('Enter valid cases', 'error'); return; }
+      if (!product) { toast('Please select a Product (PA, PS, or PE)', 'error'); return; }
+
+      const party = state.parties.find(p => p.name.toLowerCase() === partyName.toLowerCase());
+      if (!party) { toast('Party not found. Please use a configured party.', 'error'); return; }
+
+      const updatedData = {
+        party: party.name,
+        cases: cases,
+        product: product,
+        sp: party.sp,
+        date: date
+      };
+
+      const entry = state.entries.find(e => e.id === editingEntryId);
+      if (!entry) { toast('Entry not found', 'error'); return; }
+
+      try {
+        const db = await ensureDb();
+        const { doc, updateDoc, collection, getDocs } = window._fs;
+        if (entry._id) {
+          await updateDoc(doc(db, 'entries', entry._id), updatedData);
+        } else {
+          const snap = await getDocs(collection(db, 'entries'));
+          const match = snap.docs.find(d => d.data().id === editingEntryId);
+          if (match) {
+            await updateDoc(doc(db, 'entries', match.id), updatedData);
+          }
+        }
+
+        // Local state update immediately
+        Object.assign(entry, updatedData);
+        saveState();
+        refreshCurrentTab();
+
+        closeModal('edit-modal');
+        toast('✅ Record updated successfully');
+      } catch (err) {
+        console.error("Error updating entry:", err);
+        toast('Failed to update record', 'error');
+      }
+    }
+
     // ── RECORDS ──────────────────────────────────────────────
     function renderRecords() {
       let entries = [...state.entries];
@@ -1539,7 +1706,7 @@
 
       const tbody = document.getElementById('records-tbody');
       if (!entries.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">No records found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">No records found</td></tr>';
         document.getElementById('records-tfoot').innerHTML = '';
         return;
       }
@@ -1552,6 +1719,12 @@
       <td>${getProductBadge(e.product)}</td>
       <td>${e.sp.join(' & ')}</td>
       <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.length > 1 ? 'DUO' : 'SOLO'}</span></td>
+      <td style="text-align:center">
+        <div style="display:inline-flex;gap:4px">
+          <button class="action-btn edit-btn" onclick="openEditModal(${e.id})" title="Edit Record">✏️</button>
+          <button class="action-btn del-btn" onclick="deleteEntry(${e.id})" title="Delete Record">🗑</button>
+        </div>
+      </td>
     </tr>
   `).join('');
 
