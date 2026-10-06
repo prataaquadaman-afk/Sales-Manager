@@ -487,6 +487,11 @@
       color: var(--green)
     }
 
+    .badge-purple {
+      background: rgba(168, 85, 247, .18);
+      color: #c084fc;
+    }
+
     .del-btn {
       background: none;
       border: none;
@@ -913,6 +918,7 @@
               <option value="">— Select —</option>
               <option value="PA">PA</option>
               <option value="PS">PS</option>
+              <option value="PE">PE</option>
             </select>
           </div>
           <div class="form-group">
@@ -966,6 +972,15 @@
           <input class="input" id="filter-to" type="date" onchange="renderRecords()">
         </div>
         <div class="divider"></div>
+        <div class="form-group">
+          <label>Product</label>
+          <select class="input" id="filter-product" onchange="renderRecords()">
+            <option value="">All</option>
+            <option value="PA">PA</option>
+            <option value="PS">PS</option>
+            <option value="PE">PE</option>
+          </select>
+        </div>
         <div class="form-group">
           <label>Salesperson</label>
           <select class="input" id="filter-sp" onchange="renderRecords()">
@@ -1091,6 +1106,40 @@
         </div>
       </div>
 
+      <!-- ── PE Product Section ── -->
+      <div style="margin-bottom:32px;">
+        <div
+          style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #a855f7;">
+          <span
+            style="background:rgba(168,85,247,.18);color:#c084fc;font-weight:700;font-size:13px;padding:4px 14px;border-radius:20px;letter-spacing:1px;">PE</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:#c084fc;">PE
+            Product — Salesperson Performance</span>
+        </div>
+        <div class="sp-grid" id="sp-grid-pe"></div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-title"
+            style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span>📊 PE Cases by Salesperson × Party</span>
+            <button class="btn btn-ghost btn-sm" onclick="exportSPPartyProductToExcel('PE')">⬇ Export Excel</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px">Sr.</th>
+                  <th>Salesperson</th>
+                  <th>Party</th>
+                  <th>PE Cases</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody id="sp-party-tbody-pe"></tbody>
+              <tfoot id="sp-party-tfoot-pe"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Overall Combined ── -->
       <div>
         <div
@@ -1098,7 +1147,7 @@
           <span
             style="background:rgba(244,162,97,.18);color:var(--gold);font-weight:700;font-size:13px;padding:4px 14px;border-radius:20px;letter-spacing:1px;">ALL</span>
           <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--gold);">Overall
-            Combined (PA + PS)</span>
+            Combined (PA + PS + PE)</span>
         </div>
         <div class="sp-grid" id="sp-grid"></div>
         <div class="card" style="margin-top:16px">
@@ -1354,7 +1403,7 @@
 
       if (!partyName) { toast('Enter a party name', 'error'); return; }
       if (!cases || cases < 1) { toast('Enter valid cases', 'error'); return; }
-      if (!product) { toast('Please select a Product (PA or PS)', 'error'); return; }
+      if (!product) { toast('Please select a Product (PA, PS, or PE)', 'error'); return; }
 
       const party = state.parties.find(p => p.name.toLowerCase() === partyName.toLowerCase());
       if (!party) { toast('Party not found. Please use a configured party.', 'error'); return; }
@@ -1378,6 +1427,14 @@
       document.getElementById('party-sp-hint').textContent = '';
     }
 
+    function getProductBadge(product) {
+      if (!product) return '<span style="color:var(--muted)">—</span>';
+      let badgeClass = 'badge-blue';
+      if (product === 'PS') badgeClass = 'badge-green';
+      else if (product === 'PE') badgeClass = 'badge-purple';
+      return `<span class="badge ${badgeClass}">${product}</span>`;
+    }
+
     function renderTodayEntries() {
       const today = todayStr();
       const entries = state.entries.filter(e => e.date === today);
@@ -1387,7 +1444,7 @@
     <tr>
       <td>${e.party}</td>
       <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${e.cases}</span></td>
-      <td>${e.product ? `<span class="badge ${e.product === 'PA' ? 'badge-blue' : 'badge-green'}">${e.product}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${getProductBadge(e.product)}</td>
       <td>${e.sp.join(' & ')}</td>
       <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.length > 1 ? 'DUO' : 'SOLO'}</span></td>
       <td style="color:var(--muted)">${e.time || ''}</td>
@@ -1465,11 +1522,13 @@
       let entries = [...state.entries];
       const from = document.getElementById('filter-from').value;
       const to = document.getElementById('filter-to').value;
+      const product = document.getElementById('filter-product')?.value;
       const sp = document.getElementById('filter-sp').value;
       const party = document.getElementById('filter-party').value.trim().toLowerCase();
 
       if (from) entries = entries.filter(e => e.date >= from);
       if (to) entries = entries.filter(e => e.date <= to);
+      if (product) entries = entries.filter(e => e.product === product);
       if (sp) entries = entries.filter(e => e.sp.includes(sp));
       if (party) entries = entries.filter(e => e.party.toLowerCase().includes(party));
 
@@ -1480,7 +1539,7 @@
 
       const tbody = document.getElementById('records-tbody');
       if (!entries.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">No records found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No records found</td></tr>';
         document.getElementById('records-tfoot').innerHTML = '';
         return;
       }
@@ -1490,7 +1549,7 @@
       <td style="color:var(--muted)">${e.date}</td>
       <td>${e.party}</td>
       <td><span style="font-family:'DM Mono',monospace;color:var(--gold)">${e.cases}</span></td>
-      <td>${e.product ? `<span class="badge ${e.product === 'PA' ? 'badge-blue' : 'badge-green'}">${e.product}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${getProductBadge(e.product)}</td>
       <td>${e.sp.join(' & ')}</td>
       <td><span class="badge ${e.sp.length > 1 ? 'badge-gold' : 'badge-blue'}">${e.sp.length > 1 ? 'DUO' : 'SOLO'}</span></td>
     </tr>
@@ -1514,6 +1573,7 @@
     function clearFilters() {
       document.getElementById('filter-from').value = '';
       document.getElementById('filter-to').value = '';
+      if (document.getElementById('filter-product')) document.getElementById('filter-product').value = '';
       document.getElementById('filter-sp').value = '';
       document.getElementById('filter-party').value = '';
       renderRecords();
@@ -1611,6 +1671,7 @@
 
       const paEntries = entries.filter(e => e.product === 'PA');
       const psEntries = entries.filter(e => e.product === 'PS');
+      const peEntries = entries.filter(e => e.product === 'PE');
 
       // PA section
       renderSPCards('sp-grid-pa', buildSPData(paEntries), 'linear-gradient(90deg,var(--accent),var(--accent2))');
@@ -1619,6 +1680,10 @@
       // PS section
       renderSPCards('sp-grid-ps', buildSPData(psEntries), 'linear-gradient(90deg,var(--green),#90e0ef)');
       renderSPBreakdown('sp-party-tbody-ps', 'sp-party-tfoot-ps', psEntries);
+
+      // PE section
+      renderSPCards('sp-grid-pe', buildSPData(peEntries), 'linear-gradient(90deg,#a855f7,#e879f9)');
+      renderSPBreakdown('sp-party-tbody-pe', 'sp-party-tfoot-pe', peEntries);
 
       // Overall combined
       renderSPCards('sp-grid', buildSPData(entries), 'linear-gradient(90deg,var(--gold),#f4d03f)');
